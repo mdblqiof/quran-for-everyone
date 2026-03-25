@@ -2,102 +2,120 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quran For Everyone</title>
+
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins&family=Amiri&display=swap" rel="stylesheet">
 
 <style>
 body {
-    font-family: Arial;
-    background: #0d0d0d;
-    color: white;
-    text-align: center;
+  margin:0;
+  font-family:Poppins;
+  background:#0f172a;
+  color:white;
+  text-align:center;
 }
 
 header {
-    background: #16a34a;
-    padding: 20px;
+  background:linear-gradient(135deg,#22c55e,#4ade80);
+  padding:20px;
+  font-size:28px;
+  font-weight:bold;
+}
+
+.container {
+  padding:20px;
 }
 
 select, button {
-    padding: 10px;
-    margin: 10px;
-    border-radius: 5px;
+  padding:10px;
+  margin:10px;
+  border:none;
+  border-radius:8px;
 }
 
-.ayah {
-    background: #1a1a1a;
-    margin: 15px;
-    padding: 15px;
-    border-radius: 10px;
+button {
+  background:#22c55e;
+  color:white;
+  cursor:pointer;
 }
 
 .arabic {
-    font-size: 24px;
-    direction: rtl;
+  font-family:'Amiri';
+  font-size:28px;
+  margin-top:20px;
 }
 
-.urdu {
-    color: #00ffcc;
+.translation {
+  color:#a7f3d0;
+  margin:10px;
 }
 
 audio {
-    margin-top: 10px;
+  margin-top:15px;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-    <h1>Quran For Everyone 🌍</h1>
-    <p>Read • Listen • Understand</p>
-</header>
+<header>🌙 Quran For Everyone</header>
+
+<div class="container">
 
 <h2>Select Surah</h2>
 
-<select id="surahSelect"></select>
+<select id="surah"></select>
 <button onclick="loadSurah()">Load</button>
 
-<div id="quran"></div>
+<div id="content"></div>
+
+</div>
 
 <script>
-let select = document.getElementById("surahSelect");
 
-for (let i = 1; i <= 114; i++) {
-    let option = document.createElement("option");
-    option.value = i;
-    option.text = "Surah " + i;
-    select.appendChild(option);
-}
+// Load Surah List
+fetch("https://api.alquran.cloud/v1/surah")
+.then(res => res.json())
+.then(data => {
+  let dropdown = document.getElementById("surah");
+  data.data.forEach(s => {
+    dropdown.innerHTML += `<option value="${s.number}">${s.number}. ${s.englishName}</option>`;
+  });
+});
 
 function loadSurah() {
-    let surah = select.value;
+  let num = document.getElementById("surah").value;
 
-    Promise.all([
-        fetch(`https://api.alquran.cloud/v1/surah/${surah}/ar`),
-        fetch(`https://api.alquran.cloud/v1/surah/${surah}/en.asad`),
-        fetch(`https://api.alquran.cloud/v1/surah/${surah}/ur.jalandhry`)
-    ])
-    .then(responses => Promise.all(responses.map(r => r.json())))
-    .then(data => {
-        let arabic = data[0].data.ayahs;
-        let english = data[1].data.ayahs;
-        let urdu = data[2].data.ayahs;
+  fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,en.asad,ur.jalandhry`)
+  .then(res => res.json())
+  .then(data => {
 
-        let container = document.getElementById("quran");
-        container.innerHTML = "";
+    let arabic = data.data[0].ayahs;
+    let english = data.data[1].ayahs;
+    let urdu = data.data[2].ayahs;
 
-        for (let i = 0; i < arabic.length; i++) {
-            container.innerHTML += `
-            <div class="ayah">
-                <p class="arabic">${arabic[i].text}</p>
-                <p>${english[i].text}</p>
-                <p class="urdu">${urdu[i].text}</p>
-                <audio controls src="https://cdn.islamic.network/quran/audio/128/ar.alafasy/${arabic[i].number}.mp3"></audio>
-            </div>
-            `;
-        }
-    });
+    let html = "";
+
+    for(let i=0;i<arabic.length;i++){
+      html += `
+        <div class="ayah">
+          <p class="arabic">${arabic[i].text}</p>
+          <p class="translation">${english[i].text}</p>
+          <p class="translation">${urdu[i].text}</p>
+
+          <audio controls src="https://cdn.islamic.network/quran/audio/128/ar.alafasy/${arabic[i].number}.mp3"></audio>
+        </div>
+        <hr>
+      `;
+    }
+
+    document.getElementById("content").innerHTML = html;
+
+  });
 }
+
 </script>
 
 </body>
