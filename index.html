@@ -13,100 +13,55 @@
 body {
   margin:0;
   font-family:Poppins;
-  background:#0b0f19;
+  background:#020617;
   color:white;
 }
 
-/* NAV */
-.nav {
-  padding:15px;
-  text-align:center;
-  background:#111827;
-  font-size:22px;
-  font-weight:bold;
-}
-
-/* SEARCH */
-.search-box {
-  max-width:700px;
-  margin:20px auto;
-  background:#1f2937;
-  padding:12px;
-  border-radius:50px;
-}
-
-.search-box input {
-  width:95%;
-  padding:10px;
-  border:none;
-  background:transparent;
-  color:white;
-  outline:none;
-}
-
-/* CARDS */
-.cards {
-  display:flex;
-  flex-wrap:wrap;
-  gap:15px;
-  justify-content:center;
+header {
+  background:linear-gradient(135deg,#22c55e,#16a34a);
   padding:20px;
+  text-align:center;
+  font-size:26px;
 }
 
-.card {
-  background:#1f2937;
+/* CARD */
+.ayah {
+  background:#0f172a;
+  margin:20px;
   padding:20px;
   border-radius:15px;
-  width:250px;
-  cursor:pointer;
-  transition:0.3s;
+  transition:0.5s;
 }
 
-.card:hover {
-  transform:scale(1.05);
+/* ACTIVE SLIDE */
+.active {
+  background:#065f46;
+  box-shadow:0 0 20px #22c55e;
 }
 
-/* BUTTON */
-.btn {
-  display:block;
-  margin:20px auto;
-  padding:12px 20px;
-  border:none;
-  border-radius:10px;
-  background:#22c55e;
-  color:white;
-  font-size:16px;
-  cursor:pointer;
-}
-
-/* AYAH */
-.ayah {
-  background:#111827;
-  margin:15px;
-  padding:20px;
-  border-radius:12px;
-}
-
+/* TEXT */
 .arabic {
   font-family:'Amiri';
   font-size:30px;
   text-align:right;
-  line-height:2;
 }
 
-.english {
-  color:#38bdf8;
-  margin-top:10px;
+.english { color:#38bdf8; }
+.urdu { color:#4ade80; direction:rtl; }
+
+.controls {
+  text-align:center;
+  margin:20px;
 }
 
-.urdu {
-  color:#4ade80;
-  direction:rtl;
-}
-
-audio {
-  width:100%;
-  margin-top:10px;
+button {
+  padding:10px 20px;
+  margin:5px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  background:#22c55e;
+  color:white;
 }
 
 </style>
@@ -114,67 +69,41 @@ audio {
 
 <body>
 
-<div class="nav">🌙 Quran For Everyone</div>
+<header>🌙 Quran For Everyone</header>
 
-<div class="search-box">
-  <input type="text" placeholder="Search Surah..." id="search">
+<div class="controls">
+  <button onclick="startAuto()">▶ Auto Play</button>
+  <button onclick="stopAuto()">⏹ Stop</button>
 </div>
-
-<div class="cards" id="cards"></div>
-
-<button class="btn" onclick="startAuto()">▶ Auto Play</button>
 
 <div id="content"></div>
 
 <script>
 
-let currentAyah = 0;
-let totalAyahs = 0;
+let ayahs = [];
+let current = 0;
+let playing = false;
 
-// LOAD SURAHS
-fetch("https://api.alquran.cloud/v1/surah")
-.then(res => res.json())
-.then(data => {
+// Load Surah 1 default
+loadSurah(1);
 
-  let html = "";
-  data.data.forEach(s => {
-    html += `
-      <div class="card" onclick="loadSurah(${s.number})">
-        <h3>${s.englishName}</h3>
-        <p>${s.name}</p>
-        <small>${s.numberOfAyahs} Ayahs</small>
-      </div>
-    `;
-  });
-
-  document.getElementById("cards").innerHTML = html;
-});
-
-// LOAD SURAH
 function loadSurah(num){
-
-  document.getElementById("content").innerHTML = "Loading...";
-
   fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,en.asad,ur.jalandhry`)
   .then(res => res.json())
   .then(data => {
 
-    let arabic = data.data[0].ayahs;
+    ayahs = data.data[0].ayahs;
     let english = data.data[1].ayahs;
     let urdu = data.data[2].ayahs;
 
-    currentAyah = 0;
-    totalAyahs = arabic.length;
-
     let html = "";
 
-    for(let i=0;i<arabic.length;i++){
+    for(let i=0;i<ayahs.length;i++){
       html += `
         <div class="ayah" id="ayah-${i}">
-          <div class="arabic">${arabic[i].text}</div>
+          <div class="arabic">${ayahs[i].text}</div>
           <div class="english">${english[i].text}</div>
           <div class="urdu">${urdu[i].text}</div>
-          <audio id="audio-${i}" src="https://cdn.islamic.network/quran/audio/128/ar.alafasy/${arabic[i].number}.mp3"></audio>
         </div>
       `;
     }
@@ -186,41 +115,35 @@ function loadSurah(num){
 
 // AUTO PLAY
 function startAuto(){
-  playNext();
+  playing = true;
+  playAyah();
 }
 
-function playNext(){
+function stopAuto(){
+  playing = false;
+}
 
-  if(currentAyah >= totalAyahs) return;
+function playAyah(){
 
-  let audio = document.getElementById(`audio-${currentAyah}`);
-  let ayahDiv = document.getElementById(`ayah-${currentAyah}`);
+  if(!playing || current >= ayahs.length) return;
 
-  ayahDiv.scrollIntoView({behavior:"smooth"});
+  // highlight
+  document.querySelectorAll(".ayah").forEach(a => a.classList.remove("active"));
+  document.getElementById(`ayah-${current}`).classList.add("active");
+
+  // scroll
+  document.getElementById(`ayah-${current}`).scrollIntoView({behavior:"smooth", block:"center"});
+
+  // audio
+  let audio = new Audio(`https://cdn.islamic.network/quran/audio/128/ar.alafasy/${ayahs[current].number}.mp3`);
   audio.play();
 
   audio.onended = () => {
-    currentAyah++;
-    playNext();
+    current++;
+    playAyah();
   };
 
 }
-
-// SEARCH
-document.getElementById("search").addEventListener("input", function(){
-
-  let value = this.value.toLowerCase();
-  let cards = document.querySelectorAll(".card");
-
-  cards.forEach(card => {
-    if(card.innerText.toLowerCase().includes(value)){
-      card.style.display = "block";
-    } else {
-      card.style.display = "none";
-    }
-  });
-
-});
 
 </script>
 
