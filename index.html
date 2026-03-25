@@ -1,34 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Quran For Everyone</title>
-    <style>
-        body {
-            font-family: Arial;
-            text-align: center;
-            background: #111;
-            color: white;
-        }
-        header {
-            background: green;
-            padding: 20px;
-        }
-        select, button {
-            padding: 10px;
-            margin: 10px;
-        }
-        .ayah {
-            margin: 20px;
-            padding: 10px;
-            background: #222;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Quran For Everyone</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0d0d0d;
+    color: white;
+    text-align: center;
+}
+
+header {
+    background: #16a34a;
+    padding: 20px;
+}
+
+select, button {
+    padding: 10px;
+    margin: 10px;
+    border-radius: 5px;
+}
+
+.ayah {
+    background: #1a1a1a;
+    margin: 15px;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.arabic {
+    font-size: 24px;
+    direction: rtl;
+}
+
+.urdu {
+    color: #00ffcc;
+}
+
+audio {
+    margin-top: 10px;
+}
+</style>
 </head>
+
 <body>
 
 <header>
     <h1>Quran For Everyone 🌍</h1>
+    <p>Read • Listen • Understand</p>
 </header>
 
 <h2>Select Surah</h2>
@@ -50,16 +71,31 @@ for (let i = 1; i <= 114; i++) {
 
 function loadSurah() {
     let surah = select.value;
-    fetch("https://api.alquran.cloud/v1/surah/" + surah + "/en.asad")
-    .then(res => res.json())
+
+    Promise.all([
+        fetch(`https://api.alquran.cloud/v1/surah/${surah}/ar`),
+        fetch(`https://api.alquran.cloud/v1/surah/${surah}/en.asad`),
+        fetch(`https://api.alquran.cloud/v1/surah/${surah}/ur.jalandhry`)
+    ])
+    .then(responses => Promise.all(responses.map(r => r.json())))
     .then(data => {
+        let arabic = data[0].data.ayahs;
+        let english = data[1].data.ayahs;
+        let urdu = data[2].data.ayahs;
+
         let container = document.getElementById("quran");
         container.innerHTML = "";
-        data.data.ayahs.forEach(a => {
-            container.innerHTML += `<div class='ayah'>
-                <p>${a.text}</p>
-            </div>`;
-        });
+
+        for (let i = 0; i < arabic.length; i++) {
+            container.innerHTML += `
+            <div class="ayah">
+                <p class="arabic">${arabic[i].text}</p>
+                <p>${english[i].text}</p>
+                <p class="urdu">${urdu[i].text}</p>
+                <audio controls src="https://cdn.islamic.network/quran/audio/128/ar.alafasy/${arabic[i].number}.mp3"></audio>
+            </div>
+            `;
+        }
     });
 }
 </script>
