@@ -7,22 +7,21 @@
         body {
             font-family: Arial;
             text-align: center;
-            background: #f4f4f4;
+            background: #111;
+            color: white;
         }
         header {
             background: green;
-            color: white;
             padding: 20px;
         }
-        section {
-            margin: 30px;
+        select, button {
+            padding: 10px;
+            margin: 10px;
         }
-        button {
-            padding: 10px 20px;
-            background: green;
-            color: white;
-            border: none;
-            cursor: pointer;
+        .ayah {
+            margin: 20px;
+            padding: 10px;
+            background: #222;
         }
     </style>
 </head>
@@ -30,27 +29,40 @@
 
 <header>
     <h1>Quran For Everyone 🌍</h1>
-    <p>Read, Learn and Understand Quran Worldwide</p>
 </header>
 
-<section>
-    <h2>📖 Read Quran</h2>
-    <a href="https://quran.com" target="_blank">
-        <button>Open Quran</button>
-    </a>
-</section>
+<h2>Select Surah</h2>
 
-<section>
-    <h2>🎧 Listen Quran</h2>
-    <a href="https://www.youtube.com/results?search_query=quran+recitation" target="_blank">
-        <button>Listen Now</button>
-    </a>
-</section>
+<select id="surahSelect"></select>
+<button onclick="loadSurah()">Load</button>
 
-<section>
-    <h2>📚 Learn Quran</h2>
-    <p>Coming Soon...</p>
-</section>
+<div id="quran"></div>
+
+<script>
+let select = document.getElementById("surahSelect");
+
+for (let i = 1; i <= 114; i++) {
+    let option = document.createElement("option");
+    option.value = i;
+    option.text = "Surah " + i;
+    select.appendChild(option);
+}
+
+function loadSurah() {
+    let surah = select.value;
+    fetch("https://api.alquran.cloud/v1/surah/" + surah + "/en.asad")
+    .then(res => res.json())
+    .then(data => {
+        let container = document.getElementById("quran");
+        container.innerHTML = "";
+        data.data.ayahs.forEach(a => {
+            container.innerHTML += `<div class='ayah'>
+                <p>${a.text}</p>
+            </div>`;
+        });
+    });
+}
+</script>
 
 </body>
 </html>
