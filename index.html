@@ -13,55 +13,78 @@
 body {
   margin:0;
   font-family:Poppins;
-  background:#020617;
-  color:#e2e8f0;
+  background:#0b0f19;
+  color:white;
 }
 
-header {
-  background:linear-gradient(135deg,#16a34a,#22c55e);
-  padding:20px;
+/* NAVBAR */
+.nav {
+  padding:15px;
   text-align:center;
-  font-size:28px;
+  background:#111827;
+  font-size:20px;
   font-weight:bold;
 }
 
-.container {
-  max-width:900px;
-  margin:auto;
+/* SEARCH BAR */
+.search-box {
+  max-width:700px;
+  margin:20px auto;
+  background:#1f2937;
+  padding:10px;
+  border-radius:50px;
+}
+
+.search-box input {
+  width:90%;
+  padding:10px;
+  border:none;
+  background:transparent;
+  color:white;
+  outline:none;
+}
+
+/* CARDS */
+.cards {
+  display:flex;
+  gap:20px;
+  flex-wrap:wrap;
+  justify-content:center;
   padding:20px;
 }
 
-select {
-  width:100%;
-  padding:12px;
-  border-radius:10px;
-  border:none;
-  margin-top:15px;
-}
-
-.ayah {
-  background:#0f172a;
-  margin-top:20px;
+.card {
+  background:#1f2937;
   padding:20px;
   border-radius:15px;
-  box-shadow:0 0 10px rgba(0,0,0,0.5);
+  width:300px;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+.card:hover {
+  transform:scale(1.05);
+}
+
+/* AYAH */
+.ayah {
+  background:#111827;
+  margin:15px;
+  padding:15px;
+  border-radius:10px;
 }
 
 .arabic {
   font-family:'Amiri';
-  font-size:30px;
+  font-size:28px;
   text-align:right;
-  line-height:2;
-  color:#f8fafc;
 }
 
 .english {
-  margin-top:10px;
   color:#38bdf8;
 }
 
 .urdu {
-  margin-top:5px;
   color:#4ade80;
   direction:rtl;
 }
@@ -71,50 +94,46 @@ audio {
   margin-top:10px;
 }
 
-.loader {
-  text-align:center;
-  margin-top:30px;
-}
-
 </style>
 </head>
 
 <body>
 
-<header>🌙 Quran For Everyone</header>
+<div class="nav">🌙 Quran For Everyone</div>
 
-<div class="container">
+<div class="search-box">
+  <input type="text" placeholder="Search Surah (e.g. Baqarah)" id="search">
+</div>
 
-<h2>Select Surah</h2>
-<select id="surah"></select>
+<div class="cards" id="cards"></div>
 
 <div id="content"></div>
 
-</div>
-
 <script>
 
-// Load Surah List
+// Load Surahs
 fetch("https://api.alquran.cloud/v1/surah")
 .then(res => res.json())
 .then(data => {
-  let dropdown = document.getElementById("surah");
+
+  let html = "";
   data.data.forEach(s => {
-    dropdown.innerHTML += `<option value="${s.number}">${s.number}. ${s.englishName}</option>`;
+    html += `
+      <div class="card" onclick="loadSurah(${s.number})">
+        <h3>${s.englishName}</h3>
+        <p>${s.name}</p>
+        <small>${s.numberOfAyahs} Ayahs</small>
+      </div>
+    `;
   });
 
-  // AUTO LOAD FIRST SURAH
-  loadSurah(1);
+  document.getElementById("cards").innerHTML = html;
 });
 
-// On change auto load
-document.getElementById("surah").addEventListener("change", function(){
-  loadSurah(this.value);
-});
-
+// Load Surah
 function loadSurah(num){
 
-  document.getElementById("content").innerHTML = `<div class="loader">Loading...</div>`;
+  document.getElementById("content").innerHTML = "Loading...";
 
   fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,en.asad,ur.jalandhry`)
   .then(res => res.json())
@@ -124,7 +143,7 @@ function loadSurah(num){
     let english = data.data[1].ayahs;
     let urdu = data.data[2].ayahs;
 
-    let html = "";
+    let html = "<h2 style='text-align:center'>Surah</h2>";
 
     for(let i=0;i<arabic.length;i++){
       html += `
@@ -132,9 +151,7 @@ function loadSurah(num){
           <div class="arabic">${arabic[i].text}</div>
           <div class="english">${english[i].text}</div>
           <div class="urdu">${urdu[i].text}</div>
-
-          <audio controls preload="none"
-          src="https://cdn.islamic.network/quran/audio/128/ar.alafasy/${arabic[i].number}.mp3"></audio>
+          <audio controls src="https://cdn.islamic.network/quran/audio/128/ar.alafasy/${arabic[i].number}.mp3"></audio>
         </div>
       `;
     }
@@ -143,6 +160,22 @@ function loadSurah(num){
 
   });
 }
+
+// SEARCH
+document.getElementById("search").addEventListener("input", function(){
+
+  let value = this.value.toLowerCase();
+  let cards = document.querySelectorAll(".card");
+
+  cards.forEach(card => {
+    if(card.innerText.toLowerCase().includes(value)){
+      card.style.display = "block";
+    } else {
+      card.style.display = "none";
+    }
+  });
+
+});
 
 </script>
 
